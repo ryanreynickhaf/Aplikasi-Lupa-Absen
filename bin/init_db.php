@@ -47,11 +47,22 @@ $settingsColumns=[
     'director_position'=>"VARCHAR(255) NOT NULL DEFAULT 'PLT. Direktur Sistem dan Strategi Penyelenggaraan Jalan dan Jembatan'",
     'director_signature_path'=>"VARCHAR(255) NULL",
 ];
+// Jangan gunakan placeholder pada SHOW COLUMNS. Pada MySQL native prepared statements,
+// parameter marker ditujukan untuk nilai data, bukan bagian sintaks SHOW/identifier.
+// INFORMATION_SCHEMA memungkinkan nama kolom dicek sebagai nilai yang aman untuk di-bind.
+$columnCheck=$pdo->prepare("
+    SELECT 1
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'settings'
+      AND COLUMN_NAME = ?
+    LIMIT 1
+");
 foreach($settingsColumns as $column=>$definition){
-    $check=$pdo->prepare('SHOW COLUMNS FROM settings LIKE ?');
-    $check->execute([$column]);
-    if(!$check->fetch()){
-        $pdo->exec("ALTER TABLE settings ADD COLUMN `{$column}` {$definition}");
+    $columnCheck->execute([$column]);
+    if(!$columnCheck->fetchColumn()){
+        // Nama kolom dan definisi berasal dari array statis di atas, bukan input pengguna.
+        $pdo->exec("ALTER TABLE `settings` ADD COLUMN `{$column}` {$definition}");
         fwrite(STDOUT,"Kolom settings.{$column} ditambahkan.\n");
     }
 }
