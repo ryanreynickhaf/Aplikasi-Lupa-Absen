@@ -1,0 +1,16 @@
+PERBAIKAN RAILWAY - HEALTHCHECK / PORT
+=====================================
+
+Penyebab versi v1:
+Apache image bawaan berjalan pada port 80, sedangkan Railway memberikan port dinamis
+melalui environment variable PORT. Akibatnya Build dan Deploy bisa selesai tetapi
+Network > Healthcheck gagal karena service tidak menjawab pada port yang diharapkan Railway.
+
+Versi ini memperbaiki:
+1. railway-entrypoint.sh mengubah Apache agar listen pada $PORT Railway.
+2. health.php dibuat sebagai endpoint liveness sederhana yang selalu memberi HTTP 200
+   setelah Apache berhasil start.
+3. timeout healthcheck dinaikkan menjadi 300 detik.
+4. Database tetap diinisialisasi sebelum Apache start.
+
+Setelah upload perubahan ke GitHub, Railway akan redeploy otomatis.
