@@ -40,6 +40,22 @@ foreach(array_filter(array_map('trim',preg_split('/;\s*(?:\r?\n|$)/',$schema))) 
     $pdo->exec($sql);
 }
 
+// Migrasi aman untuk database Railway lama: tambahkan pengaturan PLT. Direktur jika belum ada.
+$settingsColumns=[
+    'director_name'=>"VARCHAR(200) NOT NULL DEFAULT 'Erna Wijayanti'",
+    'director_nip'=>"VARCHAR(30) NOT NULL DEFAULT '198005082005022001'",
+    'director_position'=>"VARCHAR(255) NOT NULL DEFAULT 'PLT. Direktur Sistem dan Strategi Penyelenggaraan Jalan dan Jembatan'",
+    'director_signature_path'=>"VARCHAR(255) NULL",
+];
+foreach($settingsColumns as $column=>$definition){
+    $check=$pdo->prepare('SHOW COLUMNS FROM settings LIKE ?');
+    $check->execute([$column]);
+    if(!$check->fetch()){
+        $pdo->exec("ALTER TABLE settings ADD COLUMN `{$column}` {$definition}");
+        fwrite(STDOUT,"Kolom settings.{$column} ditambahkan.\n");
+    }
+}
+
 $adminUser=trim((string)(getenv('ADMIN_USERNAME') ?: 'admin'));
 $adminName=trim((string)(getenv('ADMIN_NAME') ?: 'Administrator'));
 $adminPass=(string)(getenv('ADMIN_PASSWORD') ?: '');

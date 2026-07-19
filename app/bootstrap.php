@@ -69,6 +69,41 @@ function next_working_day(string $date): string {
     return $dt->format('Y-m-d');
 }
 function plain_name(string $name): string { return trim(explode(',', $name)[0]); }
+
+/**
+ * Tentukan penandatangan di sisi kanan surat.
+ * Pegawai biasa -> Kepala Subdirektorat.
+ * Jika Kepala Subdirektorat yang lupa absen -> PLT. Direktur (Erna Wijayanti).
+ */
+function right_approver_for_employee(array $employee, array $set): array {
+    $employeeNip=trim((string)($employee['nip']??''));
+    $employeePosition=trim((string)($employee['position']??''));
+    $bossNip=trim((string)($set['boss_nip']??''));
+
+    $isHeadSubdirectorate=(
+        ($employeeNip!=='' && $bossNip!=='' && hash_equals($bossNip,$employeeNip))
+        || stripos($employeePosition,'Kepala Subdirektorat')!==false
+    );
+
+    if($isHeadSubdirectorate){
+        return [
+            'kind'=>'director',
+            'name'=>(string)($set['director_name']??'Erna Wijayanti'),
+            'nip'=>(string)($set['director_nip']??'198005082005022001'),
+            'position'=>(string)($set['director_position']??'PLT. Direktur Sistem dan Strategi Penyelenggaraan Jalan dan Jembatan'),
+            'signature_path'=>$set['director_signature_path']??null,
+        ];
+    }
+
+    return [
+        'kind'=>'boss',
+        'name'=>(string)($set['boss_name']??'Yusrizal Kurniawan'),
+        'nip'=>(string)($set['boss_nip']??'197903032005021003'),
+        'position'=>(string)($set['boss_position']??'Kepala Subdirektorat Pemantauan dan Evaluasi'),
+        'signature_path'=>$set['boss_signature_path']??null,
+    ];
+}
+
 function settings(): array { $row=db()->query('SELECT * FROM settings WHERE id=1')->fetch(); return $row ?: []; }
 function month_count(int $employeeId, string $date, ?int $excludeId=null): int {
     $sql='SELECT COUNT(*) FROM attendance_events WHERE employee_id=? AND DATE_FORMAT(event_date, "%Y-%m")=DATE_FORMAT(?, "%Y-%m")';

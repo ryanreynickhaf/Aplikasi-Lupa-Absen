@@ -5,6 +5,10 @@ CREATE TABLE IF NOT EXISTS settings (
  boss_nip VARCHAR(30) NOT NULL DEFAULT '197903032005021003',
  boss_position VARCHAR(255) NOT NULL DEFAULT 'Kepala Subdirektorat Pemantauan dan Evaluasi',
  boss_signature_path VARCHAR(255) NULL,
+ director_name VARCHAR(200) NOT NULL DEFAULT 'Erna Wijayanti',
+ director_nip VARCHAR(30) NOT NULL DEFAULT '198005082005022001',
+ director_position VARCHAR(255) NOT NULL DEFAULT 'PLT. Direktur Sistem dan Strategi Penyelenggaraan Jalan dan Jembatan',
+ director_signature_path VARCHAR(255) NULL,
  max_absences TINYINT UNSIGNED NOT NULL DEFAULT 4,
  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;

@@ -137,6 +137,8 @@ function build_letter_docx(array $event,array $employee,array $set,string $outpu
     $statement.=docx_template_run('*) karena: '.strtolower((string)($event['reason']??'')).' pada pukul '.substr((string)($event['event_time']??''),0,5).' melalui aplikasi '.(string)($event['app_name']??'Satu Bravo'));
     $document=docx_replace_paragraph($document,'6190D2F9',$statement);
 
+    $approver=right_approver_for_employee($employee,$set);
+
     // Blok tanda tangan memakai tabel asli agar posisi kiri/kanan sama seperti dokumen sumber.
     $document=docx_replace_paragraph($document,'27FC066D',docx_template_run((string)($set['office_city']??'Jakarta').', '.date_formal((string)$event['letter_date'])));
     $status=(string)($event['approval_status']??'pending');
@@ -149,22 +151,26 @@ function build_letter_docx(array $event,array $employee,array $set,string $outpu
     }
     $document=docx_replace_paragraph($document,'0A8F4610',$approval);
 
-    $bossPosition=trim((string)($set['boss_position']??'Kepala Subdirektorat Pemantauan dan Evaluasi'));
-    if($bossPosition==='Kepala Subdirektorat Pemantauan dan Evaluasi'){
-        $bossLine1='Kepala Subdirektorat ';
-        $bossLine2='Pemantauan dan Evaluasi,';
+    $approverPosition=trim((string)($approver['position']??''));
+    if($approverPosition==='Kepala Subdirektorat Pemantauan dan Evaluasi'){
+        $approverLine1='Kepala Subdirektorat ';
+        $approverLine2='Pemantauan dan Evaluasi,';
+    }elseif(stripos($approverPosition,'Direktur Sistem dan Strategi Penyelenggaraan Jalan dan Jembatan')!==false){
+        $prefix=str_starts_with(strtoupper($approverPosition),'PLT.') ? 'PLT. ' : '';
+        $approverLine1=$prefix.'Direktur Sistem dan Strategi';
+        $approverLine2='Penyelenggaraan Jalan dan Jembatan,';
     }else{
-        $parts=preg_split('/\\s+/', $bossPosition);
+        $parts=preg_split('/\s+/', $approverPosition) ?: [$approverPosition];
         $mid=max(1,(int)ceil(count($parts)/2));
-        $bossLine1=implode(' ',array_slice($parts,0,$mid));
-        $bossLine2=implode(' ',array_slice($parts,$mid)).',';
+        $approverLine1=implode(' ',array_slice($parts,0,$mid));
+        $approverLine2=implode(' ',array_slice($parts,$mid)).',';
     }
-    $document=docx_replace_paragraph($document,'5DC7679B',docx_template_run($bossLine1));
-    $document=docx_replace_paragraph($document,'4A47CF86',docx_template_run($bossLine2));
+    $document=docx_replace_paragraph($document,'5DC7679B',docx_template_run($approverLine1));
+    $document=docx_replace_paragraph($document,'4A47CF86',docx_template_run($approverLine2));
     $document=docx_replace_paragraph($document,'2A1D094E',docx_template_run(plain_name((string)($employee['name']??'')),['underline'=>true]));
     $document=docx_replace_paragraph($document,'4E77428F',docx_template_run('NIP. '.(string)($employee['nip']??'')));
-    $document=docx_replace_paragraph($document,'511776B0',docx_template_run(plain_name((string)($set['boss_name']??'')),['underline'=>true]));
-    $document=docx_replace_paragraph($document,'63C2F6F0',docx_template_run('NIP. '.(string)($set['boss_nip']??'')));
+    $document=docx_replace_paragraph($document,'511776B0',docx_template_run(plain_name((string)($approver['name']??'')),['underline'=>true]));
+    $document=docx_replace_paragraph($document,'63C2F6F0',docx_template_run('NIP. '.(string)($approver['nip']??'')));
 
     // Catatan penolakan: jika ada, masukkan ke paragraf titik-titik; jika kosong, biarkan format asli.
     $note=trim((string)($event['rejection_note']??''));
@@ -184,16 +190,17 @@ function build_letter_docx(array $event,array $employee,array $set,string $outpu
         $types=docx_ensure_content_type($types,$empImg['ext'],$empImg['mime']);
     }
 
-    // TTD Kepala Subdirektorat hanya muncul jika status Disetujui.
-    $bossImg=$status==='approved' ? docx_image_info($set['boss_signature_path']??null,$baseDir) : null;
-    if($bossImg){
-        $rid='rIdBossSignature';
-        [$cx,$cy]=docx_image_dims($bossImg['path'],42,18);
-        $document=docx_replace_paragraph($document,'22322AE3',docx_floating_image_run($rid,$cx,$cy,902,'Tanda tangan Kepala Subdirektorat',0));
-        $media='boss_signature.'.$bossImg['ext'];
-        $zip['word/media/'.$media]=file_get_contents($bossImg['path']);
+    // TTD sisi kanan hanya muncul jika status Disetujui.
+    // Pegawai biasa -> Kepala Subdirektorat; Kepala Subdirektorat -> PLT. Direktur.
+    $approverImg=$status==='approved' ? docx_image_info($approver['signature_path']??null,$baseDir) : null;
+    if($approverImg){
+        $rid='rIdRightApproverSignature';
+        [$cx,$cy]=docx_image_dims($approverImg['path'],42,18);
+        $document=docx_replace_paragraph($document,'22322AE3',docx_floating_image_run($rid,$cx,$cy,902,'Tanda tangan '.(string)($approver['name']??'penandatangan'),0));
+        $media='right_approver_signature.'.$approverImg['ext'];
+        $zip['word/media/'.$media]=file_get_contents($approverImg['path']);
         $rels=docx_add_relationship($rels,$rid,'media/'.$media);
-        $types=docx_ensure_content_type($types,$bossImg['ext'],$bossImg['mime']);
+        $types=docx_ensure_content_type($types,$approverImg['ext'],$approverImg['mime']);
     }
 
     $zip['word/document.xml']=$document;

@@ -1,0 +1,14 @@
+PEMBARUAN PENANDATANGAN KHUSUS - v4
+
+Aturan:
+- Pegawai/staf biasa: sisi kanan surat tetap Yusrizal Kurniawan (Kepala Subdirektorat).
+- Jika Kepala Subdirektorat yang lupa absen: sisi kanan otomatis Erna Wijayanti, NIP 198005082005022001, jabatan PLT. Direktur Sistem dan Strategi Penyelenggaraan Jalan dan Jembatan.
+- TTD Erna hanya muncul saat status Disetujui.
+- Menu Pengaturan mendapat bagian kedua untuk data dan upload TTD Erna.
+- Berlaku untuk pratinjau/PDF dan Word DOCX.
+
+Setelah deploy:
+1. Buka Pengaturan.
+2. Cari bagian Penandatangan khusus jika Kepala Subdirektorat yang lupa absen.
+3. Upload TTD Erna Wijayanti.
+4. Klik Simpan Pengaturan.

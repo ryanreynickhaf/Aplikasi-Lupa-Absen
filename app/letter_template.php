@@ -24,21 +24,28 @@ function letter_grade_display(string $grade): string {
     return $grade;
 }
 
-function boss_position_lines(string $position): string {
-    return str_replace(
-        'Kepala Subdirektorat Pemantauan dan Evaluasi',
-        'Kepala Subdirektorat<br>Pemantauan dan Evaluasi',
-        e($position)
-    );
+function approver_position_lines(string $position): string {
+    $position=trim($position);
+    if($position==='Kepala Subdirektorat Pemantauan dan Evaluasi'){
+        return 'Kepala Subdirektorat<br>Pemantauan dan Evaluasi';
+    }
+    if(stripos($position,'Direktur Sistem dan Strategi Penyelenggaraan Jalan dan Jembatan')!==false){
+        $prefix=str_starts_with(strtoupper($position),'PLT.') ? 'PLT. ' : '';
+        return e($prefix.'Direktur Sistem dan Strategi').'<br>'.e('Penyelenggaraan Jalan dan Jembatan');
+    }
+    $parts=preg_split('/\s+/', $position) ?: [$position];
+    $mid=max(1,(int)ceil(count($parts)/2));
+    return e(implode(' ',array_slice($parts,0,$mid))).'<br>'.e(implode(' ',array_slice($parts,$mid)));
 }
 
 function letter_html(array $event,array $employee,array $set): string {
     $logo=image_data_uri('assets/img/logo_pu.jpeg');
     $empSig=image_data_uri($employee['signature_path']??null);
+    $approver=right_approver_for_employee($employee,$set);
 
-    // Tanda tangan Kepala Subdirektorat hanya ditampilkan setelah surat disetujui.
-    $bossSig=$event['approval_status']==='approved'
-        ? image_data_uri($set['boss_signature_path']??null)
+    // TTD penandatangan sisi kanan hanya muncul setelah surat disetujui.
+    $approverSig=$event['approval_status']==='approved'
+        ? image_data_uri($approver['signature_path']??null)
         : '';
 
     ob_start(); ?>
@@ -79,19 +86,19 @@ function letter_html(array $event,array $employee,array $set): string {
       </tr>
       <tr class="role-row">
         <td>Pegawai yang bersangkutan,</td>
-        <td><?=boss_position_lines($set['boss_position']??'Kepala Subdirektorat Pemantauan dan Evaluasi')?>,</td>
+        <td><?=approver_position_lines((string)($approver['position']??''))?>,</td>
       </tr>
       <tr class="sign-row">
         <td><?php if($empSig):?><img class="sign-img" src="<?=$empSig?>" alt="Tanda tangan pegawai"><?php endif;?></td>
-        <td><?php if($bossSig):?><img class="sign-img boss-sign-img" src="<?=$bossSig?>" alt="Tanda tangan Kepala Subdirektorat"><?php endif;?></td>
+        <td><?php if($approverSig):?><img class="sign-img boss-sign-img" src="<?=$approverSig?>" alt="Tanda tangan <?=e($approver['name']??'penandatangan')?>"><?php endif;?></td>
       </tr>
       <tr class="name-row">
         <td><?=e(plain_name($employee['name']))?></td>
-        <td><?=e(plain_name($set['boss_name']??''))?></td>
+        <td><?=e(plain_name((string)($approver['name']??'')))?></td>
       </tr>
       <tr class="nip-row">
         <td>NIP. <?=e($employee['nip']??'')?></td>
-        <td>NIP. <?=e($set['boss_nip']??'')?></td>
+        <td>NIP. <?=e($approver['nip']??'')?></td>
       </tr>
     </table>
 
