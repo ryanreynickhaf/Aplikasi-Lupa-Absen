@@ -1,0 +1,17 @@
+HOTFIX RAILWAY - APACHE MPM v3
+
+Masalah yang diperbaiki:
+Apache gagal start dengan pesan "More than one MPM loaded".
+Railway healthcheck kemudian gagal karena /health.php tidak pernah mendapat respons.
+
+Cara pakai:
+1. Ekstrak ZIP ini.
+2. Di repository GitHub aplikasi, ganti file:
+   - Dockerfile
+   - railway-entrypoint.sh
+3. Commit changes.
+4. Railway akan redeploy otomatis.
+5. Pastikan hasil deployment menunjukkan Network > Healthcheck berhasil.
+
+Perbaikan ini memaksa Apache memakai satu MPM saja: mpm_prefork.
+mpm_event dan mpm_worker dinonaktifkan saat build dan sekali lagi saat startup.

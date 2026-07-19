@@ -1,0 +1,60 @@
+APLIKASI LUPA ABSEN - RAILWAY v1
+================================
+
+Tujuan paket ini:
+- Menjalankan aplikasi PHP yang sebelumnya ada di XAMPP langsung di Railway.
+- Mempertahankan tampilan aplikasi lokal semaksimal mungkin.
+- Menggunakan MySQL Railway sebagai database.
+- Mempertahankan generator Word berbasis template dokumen asli.
+
+LANGKAH DEPLOY (PEMULA)
+-----------------------
+1. Buat repository GitHub baru, misalnya: aplikasi-lupa-absen.
+2. Upload SEMUA isi folder paket ini ke repository tersebut.
+3. Buka Railway dan buat New Project.
+4. Tambahkan service MySQL.
+5. Tambahkan service aplikasi dari repository GitHub tadi.
+6. Pada service aplikasi -> Variables, buat referensi ke variabel MySQL:
+   MYSQLHOST
+   MYSQLPORT
+   MYSQLDATABASE
+   MYSQLUSER
+   MYSQLPASSWORD
+   Gunakan fitur Add Reference / Reference Variable dari service MySQL.
+7. Tambahkan variabel aplikasi:
+   APP_NAME=Aplikasi Lupa Absen
+   APP_TIMEZONE=Asia/Jakarta
+   ADMIN_NAME=Administrator
+   ADMIN_USERNAME=admin
+   ADMIN_PASSWORD=<buat password minimal 8 karakter>
+8. Deploy / Redeploy aplikasi.
+9. Buka Settings -> Networking -> Generate Domain agar Railway memberikan URL HTTPS publik.
+10. Login dengan ADMIN_USERNAME dan ADMIN_PASSWORD yang Anda pasang.
+
+PENTING - TANDA TANGAN / UPLOAD
+------------------------------
+Railway deployment filesystem bersifat sementara. Untuk menyimpan upload tanda tangan agar tidak hilang saat redeploy:
+1. Tambahkan Volume pada service aplikasi.
+2. Mount path volume ke:
+   /var/www/html/uploads
+
+Dengan mount tersebut, file di uploads/signatures akan tetap tersimpan.
+
+CATATAN DATABASE LAMA XAMPP
+---------------------------
+Paket ini secara default membuat database baru dan seed data pegawai.
+Bila ingin memindahkan riwayat lama dari XAMPP:
+1. Export database lupa_absen dari phpMyAdmin menjadi SQL.
+2. Import SQL ke MySQL Railway menggunakan koneksi publik/TCP Proxy atau tool database.
+3. Pastikan folder uploads/signatures lama juga dipindahkan ke volume Railway.
+
+WORD / PDF
+----------
+- Word menggunakan template asli di templates/format_lupa_absen_asli.docx.
+- Generator Word memakai template tersebut agar layout lebih dekat ke dokumen asli.
+- PDF tetap memakai print browser dari preview surat pada tahap ini.
+
+VERCEL
+------
+Untuk tahap pertama, seluruh aplikasi dijalankan di Railway supaya fungsi lama tetap utuh.
+Setelah Railway stabil, frontend dapat dipindahkan bertahap ke Next.js di Vercel tanpa mengubah database Railway.
