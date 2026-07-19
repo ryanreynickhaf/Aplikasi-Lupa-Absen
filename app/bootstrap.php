@@ -77,11 +77,25 @@ function plain_name(string $name): string { return trim(explode(',', $name)[0]);
  */
 function right_approver_for_employee(array $employee, array $set): array {
     $employeeNip=trim((string)($employee['nip']??''));
+    $employeeName=mb_strtolower(trim((string)($employee['name']??'')),'UTF-8');
     $employeePosition=trim((string)($employee['position']??''));
     $bossNip=trim((string)($set['boss_nip']??''));
 
+    // Aturan khusus yang paling utama:
+    // Jika pegawai yang membuat surat adalah Pak Yusrizal Kurniawan,
+    // maka penandatangan di sisi kanan WAJIB Bu Erna Wijayanti.
+    // Pengecekan dibuat eksplisit berdasarkan NIP dan nama agar tetap benar
+    // meskipun jabatan/data Kepala Subdirektorat pada menu Pengaturan berubah.
+    $isYusrizal=(
+        $employeeNip==='197903032005021003'
+        || str_contains($employeeName,'yusrizal kurniawan')
+    );
+
+    // Fallback untuk Kepala Subdirektorat lain apabila jabatan tersebut
+    // suatu saat diisi oleh pegawai berbeda.
     $isHeadSubdirectorate=(
-        ($employeeNip!=='' && $bossNip!=='' && hash_equals($bossNip,$employeeNip))
+        $isYusrizal
+        || ($employeeNip!=='' && $bossNip!=='' && hash_equals($bossNip,$employeeNip))
         || stripos($employeePosition,'Kepala Subdirektorat')!==false
     );
 
