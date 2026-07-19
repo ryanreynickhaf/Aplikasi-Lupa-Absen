@@ -1,7 +1,0 @@
-document.addEventListener('click',e=>{if(document.body.classList.contains('menu-open')&&!e.target.closest('.sidebar')&&!e.target.closest('.mobile-nav'))document.body.classList.remove('menu-open')});
-const eventDate=document.querySelector('#event_date'),letterDate=document.querySelector('#letter_date');
-if(eventDate&&letterDate){eventDate.addEventListener('change',()=>{if(!eventDate.value)return;const d=new Date(eventDate.value+'T12:00:00');d.setDate(d.getDate()+1);letterDate.value=d.toISOString().slice(0,10);updateCount()})}
-const employeeSelect=document.querySelector('#employee_id');if(employeeSelect)employeeSelect.addEventListener('change',updateCount);
-async function updateCount(){const box=document.querySelector('#count-warning');if(!box||!employeeSelect?.value||!eventDate?.value)return;const id=document.querySelector('input[name=id]')?.value||'';try{const r=await fetch(`month_count.php?employee_id=${encodeURIComponent(employeeSelect.value)}&date=${encodeURIComponent(eventDate.value)}&exclude_id=${encodeURIComponent(id)}`);const j=await r.json();box.className='alert '+j.class;box.innerHTML=`<strong>Setelah disimpan: ${j.message}</strong><br>Perhitungan berlaku untuk pegawai dan bulan yang dipilih.`}catch(e){}}
-if(document.querySelector('#count-warning'))updateCount();
-document.querySelectorAll('[data-confirm]').forEach(el=>el.addEventListener('click',e=>{if(!confirm(el.dataset.confirm||'Lanjutkan?'))e.preventDefault()}));
