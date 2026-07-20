@@ -8,6 +8,7 @@ $st=db()->prepare('SELECT a.*,e.name,e.nip,e.grade,e.position,e.signature_path F
 $st->execute([$id]);
 $row=$st->fetch();
 if(!$row) exit('Surat tidak ditemukan.');
+require_employee_access((int)$row['employee_id']);
 
 $employee=[
     'name'=>$row['name'],

@@ -34,7 +34,58 @@ function e(?string $value): string { return htmlspecialchars((string)$value, ENT
 function redirect(string $url): never { header('Location: ' . $url); exit; }
 function current_user(): ?array { return $_SESSION['user'] ?? null; }
 function require_login(): void { if (!current_user()) redirect('login.php'); }
-function require_admin(): void { require_login(); if ((current_user()['role'] ?? '') !== 'admin') { http_response_code(403); exit('Akses ditolak.'); } }
+function is_admin(): bool { return (current_user()['role'] ?? '') === 'admin'; }
+function require_admin(): void { require_login(); if (!is_admin()) { http_response_code(403); exit('Akses ditolak.'); } }
+
+/**
+ * ID pegawai yang terhubung dengan akun operator saat ini.
+ * Admin tetap memiliki akses global, sehingga fungsi ini terutama dipakai untuk membatasi operator.
+ */
+function current_employee_id(): ?int {
+    $user=current_user();
+    if(!$user) return null;
+    $cached=(int)($user['employee_id'] ?? 0);
+    if($cached>0) return $cached;
+    $st=db()->prepare('SELECT employee_id FROM users WHERE id=? LIMIT 1');
+    $st->execute([(int)$user['id']]);
+    $id=(int)($st->fetchColumn() ?: 0);
+    if($id>0) $_SESSION['user']['employee_id']=$id;
+    return $id>0 ? $id : null;
+}
+
+function require_operator_employee_id(): int {
+    require_login();
+    $id=current_employee_id();
+    if(!$id){
+        http_response_code(403);
+        exit('Akun operator ini belum terhubung ke data pegawai. Hubungi administrator untuk melakukan sinkronisasi akun pegawai.');
+    }
+    return $id;
+}
+
+function can_access_employee(int $employeeId): bool {
+    if(is_admin()) return true;
+    $own=current_employee_id();
+    return $own!==null && $own===$employeeId;
+}
+
+function require_employee_access(int $employeeId): void {
+    require_login();
+    if(!can_access_employee($employeeId)){
+        http_response_code(403);
+        exit('Akses ditolak. Akun operator hanya dapat mengakses data miliknya sendiri.');
+    }
+}
+
+function require_event_access(int $eventId): array {
+    require_login();
+    $st=db()->prepare('SELECT * FROM attendance_events WHERE id=? LIMIT 1');
+    $st->execute([$eventId]);
+    $row=$st->fetch();
+    if(!$row){ http_response_code(404); exit('Data kejadian tidak ditemukan.'); }
+    require_employee_access((int)$row['employee_id']);
+    return $row;
+}
 function csrf_token(): string { if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(32)); return $_SESSION['csrf']; }
 function csrf_input(): string { return '<input type="hidden" name="csrf" value="' . e(csrf_token()) . '">'; }
 function verify_csrf(): void { if (!hash_equals($_SESSION['csrf'] ?? '', $_POST['csrf'] ?? '')) { http_response_code(419); exit('Sesi formulir tidak valid. Muat ulang halaman.'); } }

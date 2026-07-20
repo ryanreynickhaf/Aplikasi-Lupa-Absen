@@ -1,13 +1,24 @@
 <?php
 require_once __DIR__.'/app/layout.php'; require_login();
+$admin=is_admin(); $own=$admin?null:require_operator_employee_id();
 $month=date('Y-m'); $set=settings(); $max=(int)($set['max_absences']??4);
-$employeeCount=(int)db()->query('SELECT COUNT(*) FROM employees WHERE active=1')->fetchColumn();
-$st=db()->prepare('SELECT COUNT(*) FROM attendance_events WHERE DATE_FORMAT(event_date,"%Y-%m")=?');$st->execute([$month]);$eventCount=(int)$st->fetchColumn();
-$st=db()->prepare('SELECT COUNT(*) FROM attendance_events WHERE approval_status="pending"');$st->execute();$pending=(int)$st->fetchColumn();
-$st=db()->prepare('SELECT employee_id,COUNT(*) c FROM attendance_events WHERE DATE_FORMAT(event_date,"%Y-%m")=? GROUP BY employee_id');$st->execute([$month]);$counts=[];foreach($st as $r)$counts[(int)$r['employee_id']]=(int)$r['c'];$limit=count(array_filter($counts,fn($n)=>$n>=$max));
-$emps=db()->query('SELECT * FROM employees WHERE active=1 ORDER BY name')->fetchAll();
-$recent=db()->query('SELECT a.*,e.name FROM attendance_events a JOIN employees e ON e.id=a.employee_id ORDER BY a.created_at DESC LIMIT 7')->fetchAll();
+if($admin){
+  $employeeCount=(int)db()->query('SELECT COUNT(*) FROM employees WHERE active=1')->fetchColumn();
+  $st=db()->prepare('SELECT COUNT(*) FROM attendance_events WHERE DATE_FORMAT(event_date,"%Y-%m")=?');$st->execute([$month]);$eventCount=(int)$st->fetchColumn();
+  $pending=(int)db()->query('SELECT COUNT(*) FROM attendance_events WHERE approval_status="pending"')->fetchColumn();
+  $st=db()->prepare('SELECT employee_id,COUNT(*) c FROM attendance_events WHERE DATE_FORMAT(event_date,"%Y-%m")=? GROUP BY employee_id');$st->execute([$month]);$counts=[];foreach($st as $r)$counts[(int)$r['employee_id']]=(int)$r['c'];
+  $limit=count(array_filter($counts,fn($n)=>$n>=$max));
+  $emps=db()->query('SELECT * FROM employees WHERE active=1 ORDER BY name')->fetchAll();
+  $recent=db()->query('SELECT a.*,e.name FROM attendance_events a JOIN employees e ON e.id=a.employee_id ORDER BY a.created_at DESC LIMIT 7')->fetchAll();
+}else{
+  $employeeCount=1;
+  $st=db()->prepare('SELECT COUNT(*) FROM attendance_events WHERE employee_id=? AND DATE_FORMAT(event_date,"%Y-%m")=?');$st->execute([$own,$month]);$eventCount=(int)$st->fetchColumn();
+  $st=db()->prepare('SELECT COUNT(*) FROM attendance_events WHERE employee_id=? AND approval_status="pending"');$st->execute([$own]);$pending=(int)$st->fetchColumn();
+  $counts=[$own=>$eventCount]; $limit=$eventCount>=$max?1:0;
+  $st=db()->prepare('SELECT * FROM employees WHERE id=?');$st->execute([$own]);$emps=$st->fetchAll();
+  $st=db()->prepare('SELECT a.*,e.name FROM attendance_events a JOIN employees e ON e.id=a.employee_id WHERE a.employee_id=? ORDER BY a.created_at DESC LIMIT 7');$st->execute([$own]);$recent=$st->fetchAll();
+}
 page_header('Dashboard','dashboard');
-?><div class="grid cards"><div class="card stat"><div><div class="label">Jumlah pegawai</div><div class="value"><?=$employeeCount?></div></div><div class="icon">♙</div></div><div class="card stat"><div><div class="label">Kejadian bulan ini</div><div class="value"><?=$eventCount?></div></div><div class="icon">▣</div></div><div class="card stat"><div><div class="label">Mencapai batas</div><div class="value"><?=$limit?></div></div><div class="icon">⚠</div></div><div class="card stat"><div><div class="label">Menunggu persetujuan</div><div class="value"><?=$pending?></div></div><div class="icon">✎</div></div></div>
+?><div class="grid cards"><div class="card stat"><div><div class="label"><?=$admin?'Jumlah pegawai':'Data pegawai'?></div><div class="value"><?=$employeeCount?></div></div><div class="icon">♙</div></div><div class="card stat"><div><div class="label">Kejadian bulan ini</div><div class="value"><?=$eventCount?></div></div><div class="icon">▣</div></div><div class="card stat"><div><div class="label">Mencapai batas</div><div class="value"><?=$limit?></div></div><div class="icon">⚠</div></div><div class="card stat"><div><div class="label">Menunggu persetujuan</div><div class="value"><?=$pending?></div></div><div class="icon">✎</div></div></div>
 <div class="grid two-col"><div class="card"><div class="section-title"><h2>Rekap <?=e(indo_months()[(int)date('n')].' '.date('Y'))?></h2><a class="btn small" href="event_form.php">Tambah kejadian</a></div><?php foreach($emps as $emp):$n=$counts[$emp['id']]??0;[$cls,$label,$msg]=count_status($n,$max);?><div class="employee-card"><div><h3><?=e($emp['name'])?></h3><p><?=e($emp['position']?:'-')?></p><span class="badge <?=$cls?>"><?=e($msg)?></span></div><a class="btn secondary small" href="calendar.php?employee_id=<?=$emp['id']?>">Kalender</a></div><?php endforeach;?></div>
 <div class="card"><div class="section-title"><h2>Kejadian terbaru</h2><a class="btn secondary small" href="events.php">Lihat semua</a></div><?php if(!$recent):?><div class="empty">Belum ada kejadian.</div><?php else:foreach($recent as $r):?><div class="employee-card"><div><h3><?=e($r['name'])?></h3><p><?=e(date_formal($r['event_date']))?> · <?=e(categories()[$r['category']])?></p></div><a class="btn secondary small" href="letter.php?id=<?=$r['id']?>">Surat</a></div><?php endforeach;endif;?></div></div><?php page_footer();

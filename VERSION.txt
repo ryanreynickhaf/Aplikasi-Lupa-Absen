@@ -1,1 +1,1 @@
-v13 - Gelar TTD Kepala/PLT + Akun Otomatis Pegawai
+14.0 - Akses operator terbatas per pegawai dan approval admin-only

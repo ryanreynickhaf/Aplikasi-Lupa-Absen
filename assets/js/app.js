@@ -1,6 +1,7 @@
 document.addEventListener('click',e=>{if(document.body.classList.contains('menu-open')&&!e.target.closest('.sidebar')&&!e.target.closest('.mobile-nav'))document.body.classList.remove('menu-open')});
 const eventDate=document.querySelector('#event_date'),letterDate=document.querySelector('#letter_date');
-if(eventDate&&letterDate){eventDate.addEventListener('change',()=>{if(!eventDate.value)return;const d=new Date(eventDate.value+'T12:00:00');d.setDate(d.getDate()+1);letterDate.value=d.toISOString().slice(0,10);updateCount()})}
+function nextWorkingDate(value){if(!value)return'';const [y,m,d]=value.split('-').map(Number);const dt=new Date(y,m-1,d);do{dt.setDate(dt.getDate()+1)}while(dt.getDay()===0||dt.getDay()===6);return [dt.getFullYear(),String(dt.getMonth()+1).padStart(2,'0'),String(dt.getDate()).padStart(2,'0')].join('-')}
+if(eventDate&&letterDate){eventDate.addEventListener('change',()=>{if(!eventDate.value)return;letterDate.value=nextWorkingDate(eventDate.value);updateCount()})}
 const employeeSelect=document.querySelector('#employee_id');if(employeeSelect)employeeSelect.addEventListener('change',updateCount);
 async function updateCount(){const box=document.querySelector('#count-warning');if(!box||!employeeSelect?.value||!eventDate?.value)return;const id=document.querySelector('input[name=id]')?.value||'';try{const r=await fetch(`month_count.php?employee_id=${encodeURIComponent(employeeSelect.value)}&date=${encodeURIComponent(eventDate.value)}&exclude_id=${encodeURIComponent(id)}`);const j=await r.json();box.className='alert '+j.class;box.innerHTML=`<strong>Setelah disimpan: ${j.message}</strong><br>Perhitungan berlaku untuk pegawai dan bulan yang dipilih.`}catch(e){}}
 if(document.querySelector('#count-warning'))updateCount();
