@@ -3,11 +3,11 @@
 /* Surat - A4 portrait, margin atas 1 cm, kanan 2 cm, bawah 0,48 cm, kiri 3 cm */
 .preview-bg{background:#cfd2d8;border-radius:14px;padding:18px;overflow:auto}
 .paper{box-sizing:border-box;width:210mm;min-height:297mm;margin:auto;background:#fff;padding:10mm 20mm 4.8mm 30mm;color:#111;font-family:Arial,sans-serif;font-size:11pt;line-height:1.15;box-shadow:0 5px 25px #0003}
-.letterhead{width:100%;border-collapse:collapse;table-layout:fixed;border-bottom:1.8px solid #111}
-.letterhead td{border:0;padding:0 0 1.5mm;vertical-align:middle}
+.letterhead{width:100%;border-collapse:collapse;table-layout:fixed;border-bottom:0}
+.letterhead td{border:0;padding:0;vertical-align:middle}
 .letterhead-logo{width:27mm;text-align:left}
 .letterhead-logo img{display:block;width:24mm;height:24mm;object-fit:contain}
-.letterhead-text{text-align:center}
+.letterhead-text{text-align:center;border-bottom:1.8px solid #111;padding-bottom:1.5mm}
 .head-ministry{font-size:18pt;line-height:1;font-weight:400}
 .head-directorate{font-size:12pt;line-height:1.05;margin-top:.6mm}
 .head-unit{font-size:10pt;line-height:1.05;font-weight:700;margin-top:.5mm;white-space:nowrap}

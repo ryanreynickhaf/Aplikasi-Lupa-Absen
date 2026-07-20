@@ -25,17 +25,9 @@ function letter_grade_display(string $grade): string {
 }
 
 function approver_position_lines(string $position): string {
-    $position=trim($position);
-    if($position==='Kepala Subdirektorat Pemantauan dan Evaluasi'){
-        return 'Kepala Subdirektorat<br>Pemantauan dan Evaluasi';
-    }
-    if(stripos($position,'Direktur Sistem dan Strategi Penyelenggaraan Jalan dan Jembatan')!==false){
-        $prefix=str_starts_with(strtoupper($position),'PLT.') ? 'PLT. ' : '';
-        return e($prefix.'Direktur Sistem dan Strategi').'<br>'.e('Penyelenggaraan Jalan dan Jembatan');
-    }
-    $parts=preg_split('/\s+/', $position) ?: [$position];
-    $mid=max(1,(int)ceil(count($parts)/2));
-    return e(implode(' ',array_slice($parts,0,$mid))).'<br>'.e(implode(' ',array_slice($parts,$mid)));
+    [$line1,$line2]=approver_position_two_lines($position);
+    if($line2==='') return e($line1);
+    return e($line1).'<br>'.e($line2);
 }
 
 function letter_html(array $event,array $employee,array $set): string {

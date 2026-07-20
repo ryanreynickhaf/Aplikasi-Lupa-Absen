@@ -198,6 +198,41 @@ function sync_all_employee_accounts(PDO $pdo,string $defaultPassword='SubditPE20
 }
 
 /**
+ * Pecah jabatan penandatangan menjadi maksimal dua baris tanpa mengganti isi.
+ * Nilai selalu berasal dari menu Pengaturan, sehingga perubahan jabatan langsung
+ * tercermin pada pratinjau/PDF maupun DOCX.
+ */
+function approver_position_two_lines(string $position): array {
+    $position=trim((string)preg_replace('/\s+/u',' ',$position));
+    if($position==='') return ['',''];
+
+    $words=preg_split('/\s+/u',$position) ?: [$position];
+    if(count($words)<=3) return [$position,''];
+
+    $bestIndex=1;
+    $bestScore=PHP_INT_MAX;
+    $count=count($words);
+    for($i=1;$i<$count;$i++){
+        $left=implode(' ',array_slice($words,0,$i));
+        $right=implode(' ',array_slice($words,$i));
+        $leftLen=function_exists('mb_strlen') ? mb_strlen($left,'UTF-8') : strlen($left);
+        $rightLen=function_exists('mb_strlen') ? mb_strlen($right,'UTF-8') : strlen($right);
+        $score=abs($leftLen-$rightLen);
+        // Hindari baris kedua yang terlalu pendek bila ada pilihan lain.
+        if($rightLen<10) $score+=20;
+        if($score<$bestScore){
+            $bestScore=$score;
+            $bestIndex=$i;
+        }
+    }
+
+    return [
+        implode(' ',array_slice($words,0,$bestIndex)),
+        implode(' ',array_slice($words,$bestIndex)),
+    ];
+}
+
+/**
  * Tentukan penandatangan di sisi kanan surat.
  * Pegawai biasa -> Kepala Subdirektorat.
  * Jika Kepala Subdirektorat yang lupa absen -> PLT. Direktur (Erna Wijayanti).

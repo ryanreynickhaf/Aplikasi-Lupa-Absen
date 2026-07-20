@@ -153,19 +153,11 @@ function build_letter_docx(array $event,array $employee,array $set,string $outpu
     $document=docx_replace_paragraph($document,'0A8F4610',$approval);
 
     $approverPosition=trim((string)($approver['position']??''));
-    if($approverPosition==='Kepala Subdirektorat Pemantauan dan Evaluasi'){
-        $approverLine1='Kepala Subdirektorat ';
-        $approverLine2='Pemantauan dan Evaluasi,';
-    }elseif(stripos($approverPosition,'Direktur Sistem dan Strategi Penyelenggaraan Jalan dan Jembatan')!==false){
-        $prefix=str_starts_with(strtoupper($approverPosition),'PLT.') ? 'PLT. ' : '';
-        $approverLine1=$prefix.'Direktur Sistem dan Strategi';
-        $approverLine2='Penyelenggaraan Jalan dan Jembatan,';
-    }else{
-        $parts=preg_split('/\s+/', $approverPosition) ?: [$approverPosition];
-        $mid=max(1,(int)ceil(count($parts)/2));
-        $approverLine1=implode(' ',array_slice($parts,0,$mid));
-        $approverLine2=implode(' ',array_slice($parts,$mid)).',';
-    }
+    // Jangan bangun ulang jabatan secara hard-code. Pecah nilai aktual dari menu
+    // Pengaturan agar setiap perubahan jabatan langsung masuk ke DOCX.
+    [$approverLine1,$approverLine2]=approver_position_two_lines($approverPosition);
+    if($approverLine2!=='') $approverLine2.=',';
+    elseif($approverLine1!=='') $approverLine1.=',';
     $document=docx_replace_paragraph($document,'5DC7679B',docx_template_run($approverLine1));
     $document=docx_replace_paragraph($document,'4A47CF86',docx_template_run($approverLine2));
     $document=docx_replace_paragraph($document,'2A1D094E',docx_template_run((string)$signatureNames['employee'],['underline'=>true]));
