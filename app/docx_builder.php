@@ -138,6 +138,7 @@ function build_letter_docx(array $event,array $employee,array $set,string $outpu
     $document=docx_replace_paragraph($document,'6190D2F9',$statement);
 
     $approver=right_approver_for_employee($employee,$set);
+    $signatureNames=signature_display_names($employee,$approver);
 
     // Blok tanda tangan memakai tabel asli agar posisi kiri/kanan sama seperti dokumen sumber.
     $document=docx_replace_paragraph($document,'27FC066D',docx_template_run((string)($set['office_city']??'Jakarta').', '.date_formal((string)$event['letter_date'])));
@@ -167,9 +168,9 @@ function build_letter_docx(array $event,array $employee,array $set,string $outpu
     }
     $document=docx_replace_paragraph($document,'5DC7679B',docx_template_run($approverLine1));
     $document=docx_replace_paragraph($document,'4A47CF86',docx_template_run($approverLine2));
-    $document=docx_replace_paragraph($document,'2A1D094E',docx_template_run(plain_name((string)($employee['name']??'')),['underline'=>true]));
+    $document=docx_replace_paragraph($document,'2A1D094E',docx_template_run((string)$signatureNames['employee'],['underline'=>true]));
     $document=docx_replace_paragraph($document,'4E77428F',docx_template_run('NIP. '.(string)($employee['nip']??'')));
-    $document=docx_replace_paragraph($document,'511776B0',docx_template_run(plain_name((string)($approver['name']??'')),['underline'=>true]));
+    $document=docx_replace_paragraph($document,'511776B0',docx_template_run((string)$signatureNames['approver'],['underline'=>true]));
     $document=docx_replace_paragraph($document,'63C2F6F0',docx_template_run('NIP. '.(string)($approver['nip']??'')));
 
     // Catatan penolakan: jika ada, masukkan ke paragraf titik-titik; jika kosong, biarkan format asli.

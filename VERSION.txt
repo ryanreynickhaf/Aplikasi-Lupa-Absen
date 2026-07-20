@@ -1,9 +1,1 @@
-Aplikasi Lupa Absen Railway v9 Full Stable
-Tanggal paket: 2026-07-19
-
-Basis:
-- Infrastruktur Railway stabil: PHP 8.3 + Apache, PORT dinamis Railway, healthcheck /health.php, MPM prefork tunggal.
-- Manajemen pengguna v5: tambah/edit/hapus/reset password.
-- Penandatangan khusus: pegawai biasa -> Yusrizal; Yusrizal/Kepala Subdirektorat -> Erna Wijayanti.
-- Pengaturan terpisah untuk data dan TTD Yusrizal serta Erna.
-- Generator surat Word/PDF, kalender, batas maksimal 4 kali, dan aturan hari kerja tetap tersedia.
+v13 - Gelar TTD Kepala/PLT + Akun Otomatis Pegawai

@@ -21,6 +21,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? 'create';
 
     try {
+        if ($action === 'sync_employees') {
+            $result = sync_all_employee_accounts($pdo, (string)(getenv('EMPLOYEE_DEFAULT_PASSWORD') ?: 'SubditPE2026'));
+            log_activity('sync', 'user', null, 'Sinkronisasi akun pegawai; akun baru: ' . count($result['created']));
+            flash('success', count($result['created']) . ' akun pegawai baru dibuat. Akun yang sudah ada tidak diubah.');
+            redirect('users.php');
+        }
+
         if ($action === 'create') {
             $name = trim((string)($_POST['name'] ?? ''));
             $username = trim((string)($_POST['username'] ?? ''));
@@ -109,12 +116,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $editUser = null;
 $editId = (int)($_GET['edit'] ?? 0);
 if ($editId > 0) {
-    $st = $pdo->prepare('SELECT id,name,username,role,created_at FROM users WHERE id=?');
+    $st = $pdo->prepare('SELECT id,employee_id,name,username,role,created_at FROM users WHERE id=?');
     $st->execute([$editId]);
     $editUser = $st->fetch() ?: null;
 }
 
-$rows = $pdo->query('SELECT id,name,username,role,created_at FROM users ORDER BY name')->fetchAll();
+$rows = $pdo->query('SELECT id,employee_id,name,username,role,created_at FROM users ORDER BY name')->fetchAll();
 page_header('Pengguna', 'users');
 if ($error) echo '<div class="alert error">' . e($error) . '</div>';
 ?>
@@ -122,10 +129,18 @@ if ($error) echo '<div class="alert error">' . e($error) . '</div>';
   <div class="card">
     <div class="section-title">
       <h2>Daftar pengguna</h2>
-      <span class="badge info"><?=count($rows)?> pengguna</span>
+      <div class="actions-inline">
+        <span class="badge info"><?=count($rows)?> pengguna</span>
+        <form method="post" style="display:inline">
+          <?=csrf_input()?>
+          <input type="hidden" name="action" value="sync_employees">
+          <button class="btn secondary small" type="submit">Sinkronkan Akun Pegawai</button>
+        </form>
+      </div>
     </div>
     <div class="alert" style="font-size:12px">
-      <strong>Catatan keamanan:</strong> kata sandi lama tidak dapat ditampilkan karena disimpan sebagai hash satu arah. Admin dapat <strong>mereset kata sandi</strong> melalui tombol Ubah. Kata sandi baru bisa dilihat/sembunyikan saat diketik.
+      <strong>Akun pegawai otomatis:</strong> setiap data pegawai dibuatkan akun Operator dengan username dari <strong>nama depan</strong> (huruf kecil) dan password awal <strong>SubditPE2026</strong>. Jika username sudah dipakai, sistem menambahkan angka (contoh: ryan2). Akun yang sudah ada tidak di-reset otomatis.<br>
+      <strong>Catatan keamanan:</strong> password disimpan sebagai hash satu arah sehingga password lama tidak dapat dibaca kembali. Setelah login pertama, sebaiknya setiap pegawai mengganti password melalui menu <strong>Ubah kata sandi</strong>.
     </div>
     <div class="table-wrap">
       <table class="data" style="min-width:760px">

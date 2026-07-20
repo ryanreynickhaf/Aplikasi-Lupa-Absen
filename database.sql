@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS settings (
  boss_nip VARCHAR(30) NOT NULL DEFAULT '197903032005021003',
  boss_position VARCHAR(255) NOT NULL DEFAULT 'Kepala Subdirektorat Pemantauan dan Evaluasi',
  boss_signature_path VARCHAR(255) NULL,
- director_name VARCHAR(200) NOT NULL DEFAULT 'Erna Wijayanti',
+ director_name VARCHAR(200) NOT NULL DEFAULT 'Erna Wijayanti, S.T., M.Sc.',
  director_nip VARCHAR(30) NOT NULL DEFAULT '198005082005022001',
  director_position VARCHAR(255) NOT NULL DEFAULT 'PLT. Direktur Sistem dan Strategi Penyelenggaraan Jalan dan Jembatan',
  director_signature_path VARCHAR(255) NULL,
@@ -15,11 +15,13 @@ CREATE TABLE IF NOT EXISTS settings (
 INSERT IGNORE INTO settings(id) VALUES(1);
 CREATE TABLE IF NOT EXISTS users (
  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ employee_id INT UNSIGNED NULL,
  name VARCHAR(150) NOT NULL,
  username VARCHAR(80) NOT NULL UNIQUE,
  password_hash VARCHAR(255) NOT NULL,
  role ENUM('admin','operator') NOT NULL DEFAULT 'operator',
- created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ UNIQUE KEY uq_users_employee_id(employee_id)
 ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS employees (
  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

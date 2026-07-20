@@ -70,6 +70,82 @@ function next_working_day(string $date): string {
 }
 function plain_name(string $name): string { return trim(explode(',', $name)[0]); }
 
+
+/**
+ * Nama yang ditampilkan pada area tanda tangan.
+ * Untuk surat Kepala Subdirektorat, gelar Yusrizal dan PLT. Direktur tetap ditampilkan.
+ * Untuk surat pegawai biasa, format lama tetap memakai nama tanpa gelar.
+ */
+function signature_display_names(array $employee, array $approver): array {
+    $special = (($approver['kind'] ?? '') === 'director');
+    return [
+        'employee' => $special ? trim((string)($employee['name'] ?? '')) : plain_name((string)($employee['name'] ?? '')),
+        'approver' => $special ? trim((string)($approver['name'] ?? '')) : plain_name((string)($approver['name'] ?? '')),
+    ];
+}
+
+/** Buat username akun pegawai dari nama depan. */
+function employee_username_base(string $name): string {
+    $name=trim($name);
+    $first=preg_split('/\\s+/u',$name,2)[0] ?? 'pegawai';
+    $ascii=function_exists('iconv') ? @iconv('UTF-8','ASCII//TRANSLIT//IGNORE',$first) : $first;
+    if($ascii===false || $ascii==='') $ascii=$first;
+    $base=strtolower((string)preg_replace('/[^a-zA-Z0-9]+/','',$ascii));
+    return $base!=='' ? $base : 'pegawai';
+}
+
+/** Cari username unik tanpa mengubah akun yang sudah ada. */
+function unique_employee_username(PDO $pdo,string $base): string {
+    $candidate=$base;
+    $suffix=2;
+    $st=$pdo->prepare('SELECT COUNT(*) FROM users WHERE username=?');
+    while(true){
+        $st->execute([$candidate]);
+        if((int)$st->fetchColumn()===0) return $candidate;
+        $candidate=$base.$suffix;
+        $suffix++;
+    }
+}
+
+/**
+ * Pastikan seorang pegawai mempunyai akun pengguna.
+ * Akun baru memakai username nama depan dan password awal SubditPE2026.
+ * Akun lama tidak di-reset agar password/peran yang sudah diubah admin tetap aman.
+ */
+function ensure_employee_user_account(PDO $pdo,int $employeeId,string $employeeName,string $defaultPassword='SubditPE2026'): array {
+    $st=$pdo->prepare('SELECT id,username,role FROM users WHERE employee_id=? LIMIT 1');
+    $st->execute([$employeeId]);
+    $linked=$st->fetch();
+    if($linked) return ['created'=>false,'linked'=>true,'username'=>$linked['username'],'id'=>(int)$linked['id']];
+
+    $base=employee_username_base($employeeName);
+    // Jika sebelumnya sudah ada akun dengan username nama depan atau nama persis (contoh: Ryan), hubungkan tanpa mengubah password/peran.
+    $st=$pdo->prepare('SELECT id,username,role FROM users WHERE employee_id IS NULL AND (LOWER(username)=LOWER(?) OR LOWER(name)=LOWER(?)) ORDER BY id LIMIT 1');
+    $st->execute([$base,$employeeName]);
+    $existing=$st->fetch();
+    if($existing){
+        $up=$pdo->prepare('UPDATE users SET employee_id=? WHERE id=?');
+        $up->execute([$employeeId,$existing['id']]);
+        return ['created'=>false,'linked'=>true,'username'=>$existing['username'],'id'=>(int)$existing['id']];
+    }
+
+    $username=unique_employee_username($pdo,$base);
+    $ins=$pdo->prepare('INSERT INTO users(employee_id,name,username,password_hash,role) VALUES(?,?,?,?,?)');
+    $ins->execute([$employeeId,$employeeName,$username,password_hash($defaultPassword,PASSWORD_DEFAULT),'operator']);
+    return ['created'=>true,'linked'=>true,'username'=>$username,'id'=>(int)$pdo->lastInsertId()];
+}
+
+/** Sinkronkan seluruh pegawai aktif/nonaktif menjadi akun tanpa mereset akun yang sudah ada. */
+function sync_all_employee_accounts(PDO $pdo,string $defaultPassword='SubditPE2026'): array {
+    $rows=$pdo->query('SELECT id,name FROM employees ORDER BY id')->fetchAll();
+    $created=[];$linked=[];
+    foreach($rows as $row){
+        $result=ensure_employee_user_account($pdo,(int)$row['id'],(string)$row['name'],$defaultPassword);
+        if($result['created']) $created[]=$result['username']; else $linked[]=$result['username'];
+    }
+    return ['created'=>$created,'linked'=>$linked];
+}
+
 /**
  * Tentukan penandatangan di sisi kanan surat.
  * Pegawai biasa -> Kepala Subdirektorat.
@@ -102,7 +178,7 @@ function right_approver_for_employee(array $employee, array $set): array {
     if($isHeadSubdirectorate){
         return [
             'kind'=>'director',
-            'name'=>(string)($set['director_name']??'Erna Wijayanti'),
+            'name'=>(string)($set['director_name']??'Erna Wijayanti, S.T., M.Sc.'),
             'nip'=>(string)($set['director_nip']??'198005082005022001'),
             'position'=>(string)($set['director_position']??'PLT. Direktur Sistem dan Strategi Penyelenggaraan Jalan dan Jembatan'),
             'signature_path'=>$set['director_signature_path']??null,

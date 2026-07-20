@@ -9,7 +9,7 @@ require_admin();
 function ensure_director_settings_columns(): void {
     $pdo = db();
     $columns = [
-        'director_name' => "VARCHAR(200) NOT NULL DEFAULT 'Erna Wijayanti'",
+        'director_name' => "VARCHAR(200) NOT NULL DEFAULT 'Erna Wijayanti, S.T., M.Sc.'",
         'director_nip' => "VARCHAR(30) NOT NULL DEFAULT '198005082005022001'",
         'director_position' => "VARCHAR(255) NOT NULL DEFAULT 'PLT. Direktur Sistem dan Strategi Penyelenggaraan Jalan dan Jembatan'",
         'director_signature_path' => "VARCHAR(255) NULL",
@@ -34,6 +34,8 @@ function ensure_director_settings_columns(): void {
 }
 
 ensure_director_settings_columns();
+// Naikkan nama default lama menjadi nama lengkap bergelar, tanpa menimpa nama yang pernah diubah admin.
+db()->exec("UPDATE settings SET director_name='Erna Wijayanti, S.T., M.Sc.' WHERE id=1 AND TRIM(director_name)='Erna Wijayanti'");
 $row = settings();
 $error = '';
 
@@ -136,7 +138,7 @@ if ($error) {
 
     <div class="field full">
         <label>Nama PLT. Direktur</label>
-        <input name="director_name" value="<?=e($row['director_name'] ?? 'Erna Wijayanti')?>" required>
+        <input name="director_name" value="<?=e($row['director_name'] ?? 'Erna Wijayanti, S.T., M.Sc.')?>" required>
     </div>
 
     <div class="field">
@@ -150,7 +152,7 @@ if ($error) {
     </div>
 
     <div class="field full">
-        <label>Upload tanda tangan Erna Wijayanti / PLT. Direktur (PNG/JPG)</label>
+        <label>Upload tanda tangan Erna Wijayanti, S.T., M.Sc. / PLT. Direktur (PNG/JPG)</label>
         <input type="file" name="director_signature" accept="image/png,image/jpeg">
         <div class="help">TTD Bu Erna hanya muncul jika yang lupa absen adalah Kepala Subdirektorat dan status surat <b>Disetujui</b>.</div>
         <?php if (!empty($row['director_signature_path'])): ?>

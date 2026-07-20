@@ -42,6 +42,7 @@ function letter_html(array $event,array $employee,array $set): string {
     $logo=image_data_uri('assets/img/logo_pu.jpeg');
     $empSig=image_data_uri($employee['signature_path']??null);
     $approver=right_approver_for_employee($employee,$set);
+    $signatureNames=signature_display_names($employee,$approver);
 
     // TTD penandatangan sisi kanan hanya muncul setelah surat disetujui.
     $approverSig=$event['approval_status']==='approved'
@@ -93,8 +94,8 @@ function letter_html(array $event,array $employee,array $set): string {
         <td><?php if($approverSig):?><img class="sign-img boss-sign-img" src="<?=$approverSig?>" alt="Tanda tangan <?=e($approver['name']??'penandatangan')?>"><?php endif;?></td>
       </tr>
       <tr class="name-row">
-        <td><?=e(plain_name($employee['name']))?></td>
-        <td><?=e(plain_name((string)($approver['name']??'')))?></td>
+        <td><?=e($signatureNames['employee'])?></td>
+        <td><?=e($signatureNames['approver'])?></td>
       </tr>
       <tr class="nip-row">
         <td>NIP. <?=e($employee['nip']??'')?></td>

@@ -42,7 +42,7 @@ foreach(array_filter(array_map('trim',preg_split('/;\s*(?:\r?\n|$)/',$schema))) 
 
 // Migrasi aman untuk database Railway lama: tambahkan pengaturan PLT. Direktur jika belum ada.
 $settingsColumns=[
-    'director_name'=>"VARCHAR(200) NOT NULL DEFAULT 'Erna Wijayanti'",
+    'director_name'=>"VARCHAR(200) NOT NULL DEFAULT 'Erna Wijayanti, S.T., M.Sc.'",
     'director_nip'=>"VARCHAR(30) NOT NULL DEFAULT '198005082005022001'",
     'director_position'=>"VARCHAR(255) NOT NULL DEFAULT 'PLT. Direktur Sistem dan Strategi Penyelenggaraan Jalan dan Jembatan'",
     'director_signature_path'=>"VARCHAR(255) NULL",
@@ -65,6 +65,30 @@ foreach($settingsColumns as $column=>$definition){
         $pdo->exec("ALTER TABLE `settings` ADD COLUMN `{$column}` {$definition}");
         fwrite(STDOUT,"Kolom settings.{$column} ditambahkan.\n");
     }
+}
+
+
+// Nama PLT. Direktur lama dinaikkan ke format bergelar, tetapi nilai custom admin tidak disentuh.
+$pdo->exec("UPDATE settings SET director_name='Erna Wijayanti, S.T., M.Sc.' WHERE id=1 AND TRIM(director_name)='Erna Wijayanti'");
+
+// Hubungkan akun pengguna dengan data pegawai agar setiap pegawai dapat mempunyai akun sendiri.
+$userColumnCheck=$pdo->prepare("
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='users' AND COLUMN_NAME='employee_id' LIMIT 1
+");
+$userColumnCheck->execute();
+if(!$userColumnCheck->fetchColumn()){
+    $pdo->exec("ALTER TABLE users ADD COLUMN employee_id INT UNSIGNED NULL AFTER id");
+    fwrite(STDOUT,"Kolom users.employee_id ditambahkan.\n");
+}
+$indexCheck=$pdo->prepare("
+    SELECT 1 FROM INFORMATION_SCHEMA.STATISTICS
+    WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='users' AND INDEX_NAME='uq_users_employee_id' LIMIT 1
+");
+$indexCheck->execute();
+if(!$indexCheck->fetchColumn()){
+    $pdo->exec("ALTER TABLE users ADD UNIQUE KEY uq_users_employee_id(employee_id)");
+    fwrite(STDOUT,"Index unik users.employee_id ditambahkan.\n");
 }
 
 $adminUser=trim((string)(getenv('ADMIN_USERNAME') ?: 'admin'));
@@ -106,5 +130,47 @@ if($count===0){
     foreach($seed as $row){$st->execute($row);}
     fwrite(STDOUT,"Data pegawai awal dibuat.\n");
 }
+
+
+
+// Buat akun untuk setiap pegawai yang belum memiliki akun.
+// Username = nama depan (huruf kecil); password awal = SubditPE2026.
+// Akun yang sudah ada TIDAK di-reset password/perannya.
+$employeeDefaultPassword=(string)(getenv('EMPLOYEE_DEFAULT_PASSWORD') ?: 'SubditPE2026');
+function init_employee_username_base(string $name): string {
+    $first=preg_split('/\s+/u',trim($name),2)[0] ?? 'pegawai';
+    $ascii=function_exists('iconv') ? @iconv('UTF-8','ASCII//TRANSLIT//IGNORE',$first) : $first;
+    if($ascii===false || $ascii==='') $ascii=$first;
+    $base=strtolower((string)preg_replace('/[^a-zA-Z0-9]+/','',$ascii));
+    return $base!=='' ? $base : 'pegawai';
+}
+function init_unique_username(PDO $pdo,string $base): string {
+    $candidate=$base;$n=2;$st=$pdo->prepare('SELECT COUNT(*) FROM users WHERE username=?');
+    while(true){$st->execute([$candidate]);if((int)$st->fetchColumn()===0)return $candidate;$candidate=$base.$n;$n++;}
+}
+$employees=$pdo->query('SELECT id,name FROM employees ORDER BY id')->fetchAll();
+$findLinked=$pdo->prepare('SELECT id,username FROM users WHERE employee_id=? LIMIT 1');
+$findLegacy=$pdo->prepare('SELECT id,username FROM users WHERE employee_id IS NULL AND (LOWER(username)=LOWER(?) OR LOWER(name)=LOWER(?)) ORDER BY id LIMIT 1');
+$linkUser=$pdo->prepare('UPDATE users SET employee_id=? WHERE id=?');
+$insertUser=$pdo->prepare('INSERT INTO users(employee_id,name,username,password_hash,role) VALUES(?,?,?,?,?)');
+$createdAccounts=[];
+foreach($employees as $emp){
+    $empId=(int)$emp['id'];$empName=(string)$emp['name'];$base=init_employee_username_base($empName);
+    $findLinked->execute([$empId]);
+    if($findLinked->fetch()) continue;
+    $findLegacy->execute([$base,$empName]);
+    $legacy=$findLegacy->fetch();
+    if($legacy){
+        $linkUser->execute([$empId,$legacy['id']]);
+        continue;
+    }
+    $username=init_unique_username($pdo,$base);
+    $insertUser->execute([$empId,$empName,$username,password_hash($employeeDefaultPassword,PASSWORD_DEFAULT),'operator']);
+    $createdAccounts[]=$username;
+}
+if($createdAccounts){
+    fwrite(STDOUT,'Akun pegawai baru dibuat: '.implode(', ',$createdAccounts)."\n");
+}
+
 
 fwrite(STDOUT,"Database siap.\n");

@@ -1,0 +1,24 @@
+DAFTAR USERNAME AWAL PEGAWAI
+Password awal semua akun baru: SubditPE2026
+
+mohammad  - Mohammad Taufiq Malik Alghani, S.T.
+abdul     - Abdul Hamdani, S.Kom.
+putri     - Putri Cendikiawati, S.T.
+helyadi   - Helyadi Pongtiku Tendeng, S.T.
+yani      - Yani
+luthfi    - Luthfi Maulid Sukmana, S.T., M.T.
+khoirul   - Khoirul Basyar, S.Pd
+firman    - Firman Alvansius Situmorang, S.T.
+rakhmat   - Rakhmat Shafly Syabana, S.T.
+henny     - Henny Kusumawardhani, S.Kom.
+sylvia    - Sylvia Dwi Lestari, A.Md
+ryan      - Ryan Reynickha Fatullah, S.T. (jika akun ryan sudah ada, akun lama dipertahankan)
+adi       - Adi Wisaka, S.T.
+niana     - Niana Fitriasari, S.T.
+fitri     - Fitri Ambarwati, S.T,MT
+yusrizal  - Yusrizal Kurniawan, S.T., M.Sc., M.Eng.
+
+Catatan:
+- Jika username sudah dipakai akun lain, sistem menambahkan angka, misalnya ryan2.
+- Akun lama tidak di-reset password atau perannya.
+- Disarankan setiap pegawai mengganti password setelah login pertama.
