@@ -66,9 +66,21 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
             $rejectionNote=$id?(string)($row['rejection_note']??''):'';
         }
 
+        $eventTime=trim($_POST['event_time']??'');
+        if(!preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/',$eventTime)) throw new RuntimeException('Pukul tidak valid.');
+
+        // Nomor surat hanya dapat dibuat/diubah Admin.
+        // Operator tidak dapat menyisipkan nomor surat melalui request manual.
+        if($admin){
+            $letterNumber=trim($_POST['letter_number']??'');
+            $letterNumber=$letterNumber!==''?$letterNumber:null;
+        }else{
+            $letterNumber=$id?($row['letter_number']??null):null;
+        }
+
         $data=[
-            $emp,$eventDate,$letterDate,$cat,$_POST['event_time'],trim($_POST['app_name']),trim($_POST['reason']),
-            trim($_POST['letter_number'])?:null,$status,$rejectionNote!==''?$rejectionNote:null,current_user()['id'],
+            $emp,$eventDate,$letterDate,$cat,$eventTime,trim($_POST['app_name']),trim($_POST['reason']),
+            $letterNumber,$status,$rejectionNote!==''?$rejectionNote:null,current_user()['id'],
         ];
 
         if($id){
@@ -79,15 +91,29 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
             $st->execute($data);
             $id=(int)db()->lastInsertId();
         }
-        log_activity('save','attendance_event',$id,'Surat '.($_POST['letter_number']??''));
+        log_activity('save','attendance_event',$id,'Surat '.($letterNumber??''));
         flash('success','Kejadian berhasil disimpan. Tanggal surat ditetapkan pada hari kerja.');
         redirect('letter.php?id='.$id);
     }catch(Throwable $e){
         $error=$e->getMessage();
         $row=array_merge($row,$_POST);
-        if(!$admin) $row['employee_id']=$ownEmployeeId;
+        if(!$admin){
+            $row['employee_id']=$ownEmployeeId;
+            $row['letter_number']=$id?($existing['letter_number']??null):null;
+            $row['approval_status']=$id?($existing['approval_status']??'pending'):'pending';
+            $row['rejection_note']=$id?($existing['rejection_note']??null):null;
+        }
     }
 }
+
+
+$timeValue=substr((string)($row['event_time']??'18:30'),0,5);
+if(!preg_match('/^(\d{2}):(\d{2})$/',$timeValue,$tm)){
+    $timeValue='18:30';
+    $tm=[null,'18','30'];
+}
+$selectedHour=$tm[1];
+$selectedMinute=$tm[2];
 
 page_header($id?'Ubah Kejadian':'Input Kejadian',$id?'events':'new');
 if($error) echo '<div class="alert error">'.e($error).'</div>';
@@ -99,15 +125,27 @@ if($error) echo '<div class="alert error">'.e($error).'</div>';
 <div class="field"><label>Tanggal kejadian</label><input id="event_date" type="date" name="event_date" value="<?=e($row['event_date'])?>" required></div>
 <div class="field"><label>Tanggal surat — hari kerja</label><input id="letter_date" type="date" name="letter_date" value="<?=e($row['letter_date'])?>" required><small class="help" id="letter-date-note">Otomatis memilih hari kerja berikutnya.</small></div>
 <div class="field full"><label>Kategori</label><div class="radio-grid"><?php foreach(categories() as $key=>$label): ?><label class="radio-card"><input type="radio" name="category" value="<?=e($key)?>" <?=$row['category']===$key?'checked':''?>><span><?=e(ucfirst($label))?></span></label><?php endforeach; ?></div></div>
-<div class="field"><label>Pukul</label><input type="time" name="event_time" value="<?=e(substr((string)$row['event_time'],0,5))?>" required></div>
+<div class="field"><label>Pukul</label><div class="time-picker-row"><select id="event_hour" aria-label="Jam"><?php for($h=0;$h<24;$h++): $hv=str_pad((string)$h,2,'0',STR_PAD_LEFT); ?><option value="<?=$hv?>" <?=$selectedHour===$hv?'selected':''?>><?=$hv?></option><?php endfor; ?></select><span class="time-separator">:</span><select id="event_minute" aria-label="Menit"><?php for($m=0;$m<60;$m++): $mv=str_pad((string)$m,2,'0',STR_PAD_LEFT); ?><option value="<?=$mv?>" <?=$selectedMinute===$mv?'selected':''?>><?=$mv?></option><?php endfor; ?></select><input type="hidden" id="event_time" name="event_time" value="<?=e($timeValue)?>"></div><small class="help">Pilih jam dan menit dari daftar.</small></div>
 <div class="field"><label>Aplikasi absensi</label><input name="app_name" value="<?=e($row['app_name'])?>" required></div>
 <div class="field full"><label>Alasan/keterangan</label><textarea name="reason" required><?=e($row['reason'])?></textarea></div>
-<div class="field"><label>Nomor surat</label><input name="letter_number" value="<?=e($row['letter_number'])?>" placeholder="Contoh: UM.01.02/SSPJJ/123"></div>
+<div class="field"><label>Nomor surat</label><?php if($admin): ?><input name="letter_number" value="<?=e($row['letter_number'])?>" placeholder="Contoh: UM.01.02/SSPJJ/123"><?php else: ?><input value="<?=e($row['letter_number']??'')?>" placeholder="Diisi oleh Admin" disabled><small class="help">Hanya Admin yang dapat mengisi atau mengubah nomor surat.</small><?php endif; ?></div>
 <div class="field"><label>Status persetujuan</label><?php if($admin): ?><select name="approval_status"><?php foreach(approval_labels() as $k=>$v): ?><option value="<?=$k?>" <?=$row['approval_status']===$k?'selected':''?>><?=e($v)?></option><?php endforeach; ?></select><?php else: ?><select disabled><option><?=e(approval_labels()[$row['approval_status']]??'Menunggu')?></option></select><small class="help">Hanya Admin yang dapat mengubah status persetujuan.</small><?php endif; ?></div>
-<div class="field full"><label>Catatan alasan tidak disetujui</label><?php if($admin): ?><textarea name="rejection_note"><?=e($row['rejection_note'])?></textarea><?php else: ?><textarea disabled><?=e($row['rejection_note'])?></textarea><?php endif; ?></div>
+<div class="field full"><label>Catatan alasan tidak disetujui</label><?php if($admin): ?><textarea name="rejection_note"><?=e($row['rejection_note'])?></textarea><?php else: ?><textarea disabled placeholder="Diisi oleh Admin apabila surat tidak disetujui"><?=e($row['rejection_note'])?></textarea><small class="help">Hanya Admin yang dapat mengisi catatan alasan tidak disetujui.</small><?php endif; ?></div>
 </div><div class="form-actions"><a class="btn ghost" href="events.php">Batal</a><button class="btn">Simpan &amp; Buat Surat</button></div></form></div>
 <div class="card"><div class="section-title"><h2>Aturan Surat</h2></div><div class="alert"><b>Persetujuan:</b> hanya Admin yang dapat menetapkan Disetujui atau Tidak Disetujui.</div><div class="alert"><b>Akses Operator:</b> operator hanya dapat mengakses data dan surat miliknya sendiri.</div><div class="alert"><b>Tanggal surat:</b> otomatis pada hari kerja berikutnya; Jumat menjadi Senin.</div></div></div>
 <script>
-(function(){const eventInput=document.getElementById('event_date'),letterInput=document.getElementById('letter_date'),note=document.getElementById('letter-date-note');function p(v){if(!/^\d{4}-\d{2}-\d{2}$/.test(v||''))return null;const [y,m,d]=v.split('-').map(Number);return new Date(y,m-1,d)}function iso(d){return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}function next(v){const d=p(v);if(!d)return'';do{d.setDate(d.getDate()+1)}while(d.getDay()===0||d.getDay()===6);return iso(d)}eventInput?.addEventListener('change',function(){letterInput.value=next(this.value);note.textContent='Tanggal surat otomatis dipindahkan ke hari kerja berikutnya.'});})();
+(function(){
+  const eventInput=document.getElementById('event_date'),letterInput=document.getElementById('letter_date'),note=document.getElementById('letter-date-note');
+  function p(v){if(!/^\d{4}-\d{2}-\d{2}$/.test(v||''))return null;const [y,m,d]=v.split('-').map(Number);return new Date(y,m-1,d)}
+  function iso(d){return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
+  function next(v){const d=p(v);if(!d)return'';do{d.setDate(d.getDate()+1)}while(d.getDay()===0||d.getDay()===6);return iso(d)}
+  eventInput?.addEventListener('change',function(){letterInput.value=next(this.value);note.textContent='Tanggal surat otomatis dipindahkan ke hari kerja berikutnya.'});
+
+  const hour=document.getElementById('event_hour'),minute=document.getElementById('event_minute'),hidden=document.getElementById('event_time');
+  function syncTime(){if(hour&&minute&&hidden) hidden.value=hour.value+':'+minute.value;}
+  hour?.addEventListener('change',syncTime);
+  minute?.addEventListener('change',syncTime);
+  syncTime();
+})();
 </script>
 <?php page_footer(); ?>
