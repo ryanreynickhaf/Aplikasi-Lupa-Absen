@@ -43,3 +43,33 @@
 .time-picker-row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px}
 .time-picker-row select{cursor:pointer;text-align:center;font-weight:700}
 .time-separator{font-size:20px;font-weight:800;color:var(--navy);text-align:center}
+
+
+/* v16 - pemilih pukul berbentuk jam */
+.clock-picker-trigger{width:100%;min-height:42px;border:1px solid #cfd5e3;border-radius:10px;padding:10px 12px;background:#fff;color:var(--text);display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-align:left}
+.clock-picker-trigger:hover,.clock-picker-trigger:focus{border-color:#6f7fc2;box-shadow:0 0 0 3px rgba(37,53,115,.10);outline:none}
+.clock-icon{font-size:20px;color:var(--navy)}
+.clock-modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.48);z-index:1000;display:grid;place-items:center;padding:18px}
+.clock-modal-backdrop[hidden]{display:none}
+.clock-modal{width:min(330px,100%);background:#fff;border-radius:14px;box-shadow:0 24px 70px rgba(0,0,0,.28);padding:18px}
+.clock-dialog-title{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;margin-bottom:10px}
+.clock-header{display:grid;grid-template-columns:76px 18px 76px 52px;align-items:center;justify-content:center;gap:4px;margin-bottom:16px}
+.clock-value{height:64px;border:0;border-radius:8px;background:#eef0f4;color:#222;font-size:36px;font-weight:500;cursor:pointer}
+.clock-value.active{background:#eee4ff;color:#4f17d7}
+.clock-colon{font-size:32px;text-align:center;font-weight:700}
+.clock-period{display:grid;grid-template-rows:1fr 1fr;height:64px;border:1px solid #d7d9df;border-radius:7px;overflow:hidden;margin-left:4px}
+.clock-period button{border:0;background:#fff;font-size:11px;color:#555;cursor:pointer}
+.clock-period button+button{border-top:1px solid #d7d9df}
+.clock-period button.active{background:#eee4ff;color:#5b21b6;font-weight:800}
+.clock-face{width:238px;height:238px;border-radius:50%;background:#eef0f2;margin:0 auto 14px;position:relative}
+.clock-number{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border:0;border-radius:50%;background:transparent;color:#30343b;display:grid;place-items:center;z-index:3;cursor:pointer;font-size:13px}
+.clock-number:hover{background:#ddd8f7}
+.clock-number.selected{background:#5b21e6;color:#fff;font-weight:800}
+.clock-hand{position:absolute;left:50%;top:50%;width:41%;height:2px;background:#5b21e6;transform-origin:left center;z-index:1}
+.clock-center-dot{position:absolute;left:50%;top:50%;width:7px;height:7px;border-radius:50%;background:#5b21e6;transform:translate(-50%,-50%);z-index:4}
+.clock-actions{display:flex;justify-content:flex-end;gap:8px}
+.clock-text-btn{border:0;background:transparent;color:#5b21e6;font-weight:800;text-transform:uppercase;padding:9px 12px;border-radius:7px;cursor:pointer}
+.clock-text-btn:hover{background:#f1edff}
+.clock-text-btn.primary{color:#4f17d7}
+body.clock-open{overflow:hidden}
+@media(max-width:480px){.clock-modal{padding:15px}.clock-header{grid-template-columns:68px 14px 68px 48px}.clock-value{font-size:32px}.clock-face{width:220px;height:220px}}
