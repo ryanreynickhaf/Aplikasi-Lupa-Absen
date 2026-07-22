@@ -35,31 +35,24 @@ function letter_html(array $event,array $employee,array $set): string {
     $approver=right_approver_for_employee($employee,$set);
     $signatureNames=signature_display_names($employee,$approver);
 
-    // TTD penandatangan sisi kanan hanya muncul setelah surat disetujui.
     $approverSig=$event['approval_status']==='approved'
         ? image_data_uri($approver['signature_path']??null)
         : '';
 
     ob_start(); ?>
 <div class="paper Section1">
-  <!--
-    KOP PRESISI BERDASARKAN TEMPLATE WORD ASLI:
-    - Logo asli di DOCX berukuran 720000 x 720000 EMU = 20 x 20 mm.
-    - Kolom logo pada tabel asli 1152 twips = ±20,32 mm.
-    - Garis dimulai dari kolom teks (bukan di bawah logo) dan berada tepat
-      pada tinggi bawah logo, sehingga garis dan bagian bawah logo sejajar.
-  -->
-  <table class="letterhead" role="presentation" style="width:100%;border-collapse:collapse;table-layout:fixed;border-bottom:0">
+  <table class="letterhead" role="presentation" style="width:100%;border-collapse:collapse;table-layout:fixed;border:0">
     <tr style="height:20mm">
-      <td class="letterhead-logo" style="width:20.32mm;height:20mm;padding:0;vertical-align:top;text-align:left;border:0">
-        <?php if($logo):?><img src="<?=$logo?>" alt="Logo Kementerian Pekerjaan Umum" style="display:block;width:20mm;height:20mm;max-width:20mm;max-height:20mm;object-fit:contain;margin:0"><?php endif;?>
+      <td class="letterhead-logo" style="width:20mm;height:20mm;padding:0;vertical-align:top;text-align:left;border:0">
+        <?php if($logo):?><img src="<?=$logo?>" alt="Logo Kementerian Pekerjaan Umum" style="display:block;width:20mm;height:20mm;object-fit:contain"><?php endif;?>
       </td>
-      <td class="letterhead-text" style="position:relative;height:20mm;padding:0 0 1mm 0;vertical-align:top;text-align:center;border:0">
-        <div class="head-ministry">KEMENTERIAN PEKERJAAN UMUM</div>
-        <div class="head-directorate">DIREKTORAT JENDERAL BINA MARGA</div>
-        <div class="head-unit">DIREKTORAT SISTEM DAN STRATEGI PENYELENGGARAAN JALAN DAN JEMBATAN</div>
-        <p>Jl. Pattimura No. 20 Kebayoran Baru, Jakarta Selatan 12110, Telepon (021) 7200281, Surel direktoratsspjjbm@pu.go.id</p>
-        <div aria-hidden="true" style="position:absolute;left:0;right:0;bottom:0;height:0;border-bottom:1px solid #111"></div>
+      <td class="letterhead-text" style="height:20mm;padding:0;vertical-align:top;text-align:center;border:0">
+        <div style="height:20mm;box-sizing:border-box;border-bottom:1.5px solid #111;display:flex;flex-direction:column;justify-content:flex-start;font-family:Arial,sans-serif;overflow:visible">
+          <div class="head-ministry" style="font-family:Arial,sans-serif;font-size:18pt;line-height:1;font-weight:400;margin:0;padding:0">KEMENTERIAN PEKERJAAN UMUM</div>
+          <div class="head-directorate" style="font-family:Arial,sans-serif;font-size:12pt;line-height:1;font-weight:400;margin:0;padding:0">DIREKTORAT JENDERAL BINA MARGA</div>
+          <div class="head-unit" style="font-family:Arial,sans-serif;font-size:10pt;line-height:1;font-weight:700;margin:0;padding:0;white-space:nowrap">DIREKTORAT SISTEM DAN STRATEGI PENYELENGGARAAN JALAN DAN JEMBATAN</div>
+          <p style="font-family:Arial,sans-serif;font-size:7.5pt;line-height:1;margin:0;padding:0;white-space:nowrap">Jl. Pattimura No. 20 Kebayoran Baru, Jakarta Selatan 12110, Telepon (021) 7200281, Surel direktoratsspjjbm@pu.go.id</p>
+        </div>
       </td>
     </tr>
   </table>
