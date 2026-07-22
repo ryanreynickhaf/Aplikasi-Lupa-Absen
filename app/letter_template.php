@@ -41,21 +41,63 @@ function letter_html(array $event,array $employee,array $set): string {
 
     ob_start(); ?>
 <div class="paper Section1">
-  <table class="letterhead" role="presentation" style="width:100%;border-collapse:collapse;table-layout:fixed;border:0">
-    <tr style="height:20mm">
-      <td class="letterhead-logo" style="width:20mm;height:20mm;padding:0;vertical-align:top;text-align:left;border:0">
-        <?php if($logo):?><img src="<?=$logo?>" alt="Logo Kementerian Pekerjaan Umum" style="display:block;width:20mm;height:20mm;object-fit:contain"><?php endif;?>
-      </td>
-      <td class="letterhead-text" style="height:20mm;padding:0;vertical-align:top;text-align:center;border:0">
-        <div style="height:20mm;box-sizing:border-box;border-bottom:1.5px solid #111;display:flex;flex-direction:column;justify-content:flex-start;font-family:Arial,sans-serif;overflow:visible">
-          <div class="head-ministry" style="font-family:Arial,sans-serif;font-size:18pt;line-height:1;font-weight:400;margin:0;padding:0">KEMENTERIAN PEKERJAAN UMUM</div>
-          <div class="head-directorate" style="font-family:Arial,sans-serif;font-size:12pt;line-height:1;font-weight:400;margin:0;padding:0">DIREKTORAT JENDERAL BINA MARGA</div>
-          <div class="head-unit" style="font-family:Arial,sans-serif;font-size:10pt;line-height:1;font-weight:700;margin:0;padding:0;white-space:nowrap">DIREKTORAT SISTEM DAN STRATEGI PENYELENGGARAAN JALAN DAN JEMBATAN</div>
-          <p style="font-family:Arial,sans-serif;font-size:7.5pt;line-height:1;margin:0;padding:0;white-space:nowrap">Jl. Pattimura No. 20 Kebayoran Baru, Jakarta Selatan 12110, Telepon (021) 7200281, Surel direktoratsspjjbm@pu.go.id</p>
-        </div>
-      </td>
-    </tr>
-  </table>
+
+  <!--
+    KOP SURAT disesuaikan dengan template Word asli:
+    - Lebar tabel asli 9514 twips = ±167,82 mm
+    - Kolom logo 1152 twips = 20,32 mm
+    - Logo asli 720000 EMU = 20 x 20 mm
+    - Garis asli mulai ±21,31 mm dari kiri dan panjang ±141 mm
+    - Font: Arial 18 / 12 / 10 / 7,5 pt
+    - Baris ke-3 memakai line spacing 1,0667 sesuai XML Word
+  -->
+  <div class="letterhead-wrap"
+       style="position:relative;width:167.82mm;height:20.35mm;margin:0;padding:0;overflow:visible;font-family:Arial,sans-serif">
+    <table class="letterhead" role="presentation"
+           style="width:167.82mm;height:19.63mm;border-collapse:collapse;table-layout:fixed;border:0;margin:0;padding:0">
+      <colgroup>
+        <col style="width:20.32mm">
+        <col style="width:147.50mm">
+      </colgroup>
+      <tr style="height:19.63mm">
+        <td class="letterhead-logo"
+            style="width:20.32mm;height:19.63mm;padding:0;margin:0;vertical-align:top;text-align:left;border:0;position:relative">
+          <?php if($logo):?>
+            <img src="<?=$logo?>"
+                 alt="Logo Kementerian Pekerjaan Umum"
+                 style="position:absolute;left:-1.45mm;top:.18mm;display:block;width:20mm;height:20mm;max-width:none;object-fit:contain">
+          <?php endif;?>
+        </td>
+
+        <td class="letterhead-text"
+            style="width:147.50mm;height:19.63mm;padding:0;margin:0;vertical-align:top;border:0;font-family:Arial,sans-serif;color:#000">
+          <p class="head-ministry"
+             style="font-family:Arial,sans-serif;font-size:18pt;font-weight:400;line-height:1;margin:0;padding:0;text-align:center;white-space:nowrap">
+            KEMENTERIAN PEKERJAAN UMUM
+          </p>
+
+          <p class="head-directorate"
+             style="font-family:Arial,sans-serif;font-size:12pt;font-weight:400;line-height:1;margin:0;padding:0;text-align:center;white-space:nowrap">
+            DIREKTORAT JENDERAL BINA MARGA
+          </p>
+
+          <p class="head-unit"
+             style="font-family:Arial,sans-serif;font-size:10pt;font-weight:700;line-height:1.0666667;margin:0;padding:0;text-align:center;white-space:nowrap;letter-spacing:-0.5pt">
+            DIREKTORAT SISTEM DAN STRATEGI PENYELENGGARAAN JALAN DAN JEMBATAN
+          </p>
+
+          <p class="head-address"
+             style="font-family:Arial,sans-serif;font-size:7.5pt;font-weight:400;line-height:1;margin:0;padding:0;text-align:left;white-space:nowrap">
+            Jl. Pattimura No. 20 Kebayoran Baru, Jakarta Selatan 12110, Telepon (021) 7200281, Surel direktoratsspjjbm@pu.go.id
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Garis horizontal mengikuti posisi dan panjang shape garis pada Word asli. -->
+    <div aria-hidden="true"
+         style="position:absolute;left:21.31mm;top:20.00mm;width:141mm;height:0;border-top:1pt solid #000"></div>
+  </div>
 
   <div class="letter-title"><h2>SURAT PERMOHONAN IZIN/PEMBERITAHUAN</h2></div>
   <div class="letter-number">Nomor : <?=e($event['letter_number']??'')?></div>
