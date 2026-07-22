@@ -17,7 +17,6 @@ function approval_decision(string $status): string {
     return 'Disetujui/tidak disetujui oleh';
 }
 
-
 function letter_grade_display(string $grade): string {
     $grade=trim($grade);
     if(preg_match('/^([^()]+?)\s*\(/u',$grade,$m)) return trim($m[1]);
@@ -46,11 +45,13 @@ function letter_html(array $event,array $employee,array $set): string {
   <table class="letterhead" role="presentation">
     <tr>
       <td class="letterhead-logo"><?php if($logo):?><img src="<?=$logo?>" alt="Logo Kementerian Pekerjaan Umum"><?php endif;?></td>
-      <td class="letterhead-text">
+      <td class="letterhead-text" style="border-bottom:0;padding-bottom:0">
         <div class="head-ministry">KEMENTERIAN PEKERJAAN UMUM</div>
         <div class="head-directorate">DIREKTORAT JENDERAL BINA MARGA</div>
         <div class="head-unit">DIREKTORAT SISTEM DAN STRATEGI PENYELENGGARAAN JALAN DAN JEMBATAN</div>
         <p>Jl. Pattimura No. 20 Kebayoran Baru, Jakarta Selatan 12110, Telepon (021) 7200281, Surel direktoratsspjjbm@pu.go.id</p>
+        <!-- Garis kop hanya mengikuti area teks, tidak melewati bawah logo PU. -->
+        <div aria-hidden="true" style="width:100%;border-bottom:1.8px solid #111;margin-top:1mm;height:0"></div>
       </td>
     </tr>
   </table>
