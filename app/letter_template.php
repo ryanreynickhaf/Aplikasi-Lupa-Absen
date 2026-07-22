@@ -70,24 +70,24 @@ function letter_html(array $event,array $employee,array $set): string {
         </td>
 
         <td class="letterhead-text"
-            style="width:147.50mm;height:19.63mm;padding:0;margin:0;vertical-align:top;border:0;font-family:Arial,sans-serif;color:#000">
+            style="position:relative;width:147.50mm;height:20mm;padding:0;margin:0;vertical-align:top;border:0;font-family:Arial,sans-serif;color:#000">
           <p class="head-ministry"
-             style="font-family:Arial,sans-serif;font-size:18pt;font-weight:400;line-height:1;margin:0;padding:0;text-align:center;white-space:nowrap">
+             style="position:absolute;left:0;right:0;top:1.15mm;font-family:Arial,sans-serif;font-size:18pt;font-weight:400;line-height:1;margin:0;padding:0;text-align:center;white-space:nowrap">
             KEMENTERIAN PEKERJAAN UMUM
           </p>
 
           <p class="head-directorate"
-             style="font-family:Arial,sans-serif;font-size:12pt;font-weight:400;line-height:1;margin:0;padding:0;text-align:center;white-space:nowrap">
+             style="position:absolute;left:0;right:0;top:8.27mm;font-family:Arial,sans-serif;font-size:12pt;font-weight:400;line-height:1;margin:0;padding:0;text-align:center;white-space:nowrap">
             DIREKTORAT JENDERAL BINA MARGA
           </p>
 
           <p class="head-unit"
-             style="font-family:Arial,sans-serif;font-size:10pt;font-weight:700;line-height:1.0666667;margin:0;padding:0;text-align:center;white-space:nowrap;letter-spacing:-0.5pt">
+             style="position:absolute;left:0;right:0;top:12.88mm;font-family:Arial,sans-serif;font-size:10pt;font-weight:700;line-height:1;margin:0;padding:0;text-align:center;white-space:nowrap;letter-spacing:-0.5pt">
             DIREKTORAT SISTEM DAN STRATEGI PENYELENGGARAAN JALAN DAN JEMBATAN
           </p>
 
           <p class="head-address"
-             style="font-family:Arial,sans-serif;font-size:7.5pt;font-weight:400;line-height:1;margin:0;padding:0;text-align:left;white-space:nowrap">
+             style="position:absolute;left:0;right:0;top:17.12mm;font-family:Arial,sans-serif;font-size:7.5pt;font-weight:400;line-height:1;margin:0;padding:0;text-align:left;white-space:nowrap">
             Jl. Pattimura No. 20 Kebayoran Baru, Jakarta Selatan 12110, Telepon (021) 7200281, Surel direktoratsspjjbm@pu.go.id
           </p>
         </td>
